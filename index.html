@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>山形屋 肉ガチャ</title>
-
 <style>
   body {
     font-family: sans-serif;
@@ -15,8 +14,33 @@
   h1 {
     color: #d84315;
   }
+  #roulette-container {
+    margin: 40px auto;
+    width: 300px;
+    height: 300px;
+    position: relative;
+  }
+  #roulette {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 5px solid #d84315;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    transition: transform 5s cubic-bezier(0.33, 1, 0.68, 1);
+  }
+  #pointer {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; 
+    height: 0; 
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 30px solid #d84315;
+  }
   button {
-    margin-top: 40px;
+    margin-top: 20px;
     padding: 18px 32px;
     font-size: 22px;
     background: #ff7043;
@@ -37,12 +61,16 @@
     min-height: 32px;
   }
 </style>
-
 </head>
 <body>
 
 <h1>山形屋 肉ガチャ</h1>
 <p>1日1回挑戦できます!</p>
+
+<div id="roulette-container">
+  <div id="pointer"></div>
+  <canvas id="roulette"></canvas>
+</div>
 
 <button id="drawButton">ガチャを回す</button>
 <p id="result"></p>
@@ -61,6 +89,41 @@ const saved = localStorage.getItem("gachaDate");
 
 const drawButton = document.getElementById("drawButton");
 const resultElem = document.getElementById("result");
+const canvas = document.getElementById('roulette');
+const ctx = canvas.getContext('2d');
+const size = canvas.width = canvas.height = 300;
+const center = size/2;
+const radius = center - 10;
+
+// ルーレット描画
+function drawRoulette() {
+  const total = prizes.reduce((sum, p) => sum + p.chance, 0);
+  let startAngle = 0;
+
+  prizes.forEach(p => {
+    const sliceAngle = (p.chance / total) * 2 * Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(center, center);
+    ctx.arc(center, center, radius, startAngle, startAngle + sliceAngle);
+    ctx.fillStyle = `hsl(${Math.random()*360}, 70%, 70%)`;
+    ctx.fill();
+    ctx.stroke();
+
+    // ラベル
+    ctx.save();
+    ctx.translate(center, center);
+    ctx.rotate(startAngle + sliceAngle/2);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#000";
+    ctx.font = "16px sans-serif";
+    ctx.fillText(p.name, radius - 10, 5);
+    ctx.restore();
+
+    startAngle += sliceAngle;
+  });
+}
+
+drawRoulette();
 
 if (saved === today) {
   drawButton.disabled = true;
@@ -70,32 +133,37 @@ if (saved === today) {
 drawButton.onclick = () => {
   drawButton.disabled = true;
 
-  // ルーレット風アニメーション
-  let count = 0;
-  const interval = setInterval(() => {
-    const randomPrize = prizes[Math.floor(Math.random() * prizes.length)].name;
-    resultElem.innerText = "🎲 " + randomPrize + " 🎲";
-    count++;
-    if (count > 20) { // ルーレットの回数（調整可能）
-      clearInterval(interval);
-
-      // 本当の抽選
-      let rand = Math.random() * 100;
-      let sum = 0;
-      let prize = "😢 外れ";
-
-      for (let p of prizes) {
-        sum += p.chance;
-        if (rand < sum) {
-          prize = p.name;
-          break;
-        }
-      }
-
-      resultElem.innerText = "🎉 " + prize + " 🎉";
-      localStorage.setItem("gachaDate", today);
+  // 本当の抽選
+  let rand = Math.random() * 100;
+  let sum = 0;
+  let prize = "😢 外れ";
+  for (let p of prizes) {
+    sum += p.chance;
+    if (rand < sum) {
+      prize = p.name;
+      break;
     }
-  }, 100); // 文字が切り替わる速度（ミリ秒）
+  }
+
+  // 回転角度を決める（当たり位置へ）
+  const total = prizes.reduce((sum, p) => sum + p.chance, 0);
+  let angle = 0;
+  for (let p of prizes) {
+    const slice = (p.chance / total) * 360;
+    if (p.name === prize) break;
+    angle += slice;
+  }
+
+  // 5回転+当たり位置
+  const rotation = 360*5 - angle + Math.random()*10;
+
+  canvas.style.transition = "transform 5s cubic-bezier(0.33, 1, 0.68, 1)";
+  canvas.style.transform = `rotate(${rotation}deg)`;
+
+  setTimeout(() => {
+    resultElem.innerText = "🎉 " + prize + " 🎉";
+    localStorage.setItem("gachaDate", today);
+  }, 5000);
 }
 </script>
 
