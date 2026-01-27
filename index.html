@@ -4,67 +4,86 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>山形屋 肉ガチャ</title>
+
 <style>
   body {
     font-family: sans-serif;
     text-align: center;
-    background: linear-gradient(to bottom, #fff8f0, #ffe0b2);
-    margin: 0;
-    padding: 0;
+    background:#fff8f0;
+    padding: 40px 16px;
   }
   h1 {
-    margin-top: 40px;
     color: #d84315;
   }
   button {
-    margin-top: 60px;
-    padding: 20px 40px;
-    font-size: 24px;
-    background-color: #ff7043;
+    margin-top: 40px;
+    padding: 18px 32px;
+    font-size: 22px;
+    background: #ff7043;
     border: none;
-    border-radius: 12px;
+    border-radius: 10px;
     color: white;
     cursor: pointer;
   }
   button:disabled {
-    background-color: #ccc;
+    background: #ccc;
     cursor: not-allowed;
   }
   #result {
-    margin-top: 50px;
-    font-size: 28px;
+    margin-top: 30px;
+    font-size: 24px;
     font-weight: bold;
     color: #6d4c41;
   }
 </style>
+
 </head>
 <body>
 
 <h1>山形屋 肉ガチャ</h1>
-<p>1日1回挑戦できます！</p>
-<button id="drawButton">ガチャを回す</button>
+<p>1日1回挑戦できます!</p>
 
+<button id="drawButton">ガチャを回す</button>
 <p id="result"></p>
 
 <script>
 const prizes = [
-  { name: "極上和牛1皿", chance: 3 },
-  { name: "上タン1皿", chance: 7 },
-  { name: "ドリンク1杯サービス", chance: 20 },
-  { name: "ハズレ（次回5%OFF）", chance: 70 }
+  { name: "🎖 極上和牛 200g", chance: 3 },
+  { name: "🥈 厚切り上タン 150g", chance: 7 },
+  { name: "🍺 ドリンク1杯", chance: 20 },
+  { name: "💴 次回10%OFF", chance: 30 },
+  { name: "😄 また明日挑戦してね", chance: 40 }
 ];
 
-// 今日1回制御
-const today = new Date().toISOString().slice(0,10);
-const lastDraw = localStorage.getItem("lastDrawDate");
+const today = new Date().toISOString().slice(0, 10);
+const saved = localStorage.getItem("gachaDate");
 
-const button = document.getElementById("drawButton");
-const result = document.getElementById("result");
+const drawButton = document.getElementById("drawButton");
+const resultElem = document.getElementById("result");
 
-if(lastDraw === today) {
-  button.disabled = true;
-  result.innerText = "本日の抽選は終了しました。";
+if (saved === today) {
+  drawButton.disabled = true;
+  resultElem.innerText = "本日の抽選は終了しました。";
 }
 
-button.onclick = () => {
-  le
+drawButton.onclick = () => {
+  let rand = Math.random() * 100;
+  let sum = 0;
+  let prize = "😢 外れ";
+
+  for (let p of prizes) {
+    sum += p.chance;
+    if (rand < sum) {
+      prize = p.name;
+      break;
+    }
+  }
+
+  resultElem.innerText = "🎉 " + prize + " 🎉";
+  drawButton.disabled = true;
+  localStorage.setItem("gachaDate", today);
+}
+</script>
+
+</body>
+</html>
