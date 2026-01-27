@@ -53,19 +53,20 @@
     background: #ccc;
     cursor: not-allowed;
   }
-  #result {
-    margin-top: 30px;
-    font-size: 24px;
+  #result, #info {
+    margin-top: 20px;
+    font-size: 20px;
     font-weight: bold;
     color: #6d4c41;
     min-height: 32px;
+    white-space: pre-line;
   }
 </style>
 </head>
 <body>
 
 <h1>山形屋 肉ガチャ</h1>
-<p>1日1回挑戦できます!</p>
+<p>1週間に1回挑戦できます!</p>
 
 <div id="roulette-container">
   <div id="pointer"></div>
@@ -74,6 +75,7 @@
 
 <button id="drawButton">ガチャを回す</button>
 <p id="result"></p>
+<p id="info"></p>
 
 <script>
 const prizes = [
@@ -81,21 +83,19 @@ const prizes = [
   { name: "🥈 厚切り上タン 150g", chance: 7 },
   { name: "🍺 ドリンク1杯", chance: 20 },
   { name: "💴 次回10%OFF", chance: 30 },
-  { name: "😄 また明日挑戦してね", chance: 40 }
+  { name: "😄 また挑戦してね", chance: 40 }
 ];
-
-const today = new Date().toISOString().slice(0, 10);
-const saved = localStorage.getItem("gachaDate");
 
 const drawButton = document.getElementById("drawButton");
 const resultElem = document.getElementById("result");
+const infoElem = document.getElementById("info");
 const canvas = document.getElementById('roulette');
 const ctx = canvas.getContext('2d');
 const size = canvas.width = canvas.height = 300;
 const center = size/2;
 const radius = center - 10;
 
-// ルーレット描画
+// 文字なしのルーレット描画（色分けのみ）
 function drawRoulette() {
   const total = prizes.reduce((sum, p) => sum + p.chance, 0);
   let startAngle = 0;
@@ -108,26 +108,27 @@ function drawRoulette() {
     ctx.fillStyle = `hsl(${Math.random()*360}, 70%, 70%)`;
     ctx.fill();
     ctx.stroke();
-
-    // ラベル
-    ctx.save();
-    ctx.translate(center, center);
-    ctx.rotate(startAngle + sliceAngle/2);
-    ctx.textAlign = "right";
-    ctx.fillStyle = "#000";
-    ctx.font = "16px sans-serif";
-    ctx.fillText(p.name, radius - 10, 5);
-    ctx.restore();
-
     startAngle += sliceAngle;
   });
 }
 
 drawRoulette();
 
-if (saved === today) {
-  drawButton.disabled = true;
-  resultElem.innerText = "本日の抽選は終了しました。";
+// 1週間制限チェック
+const lastDateStr = localStorage.getItem("gachaDate");
+let canDraw = true;
+
+if (lastDateStr) {
+  const lastDate = new Date(lastDateStr);
+  const now = new Date();
+  const diffDays = Math.floor((now - lastDate)/(1000*60*60*24));
+  if (diffDays < 7) {
+    canDraw = false;
+    drawButton.disabled = true;
+    const nextDate = new Date(lastDate);
+    nextDate.setDate(nextDate.getDate()+7);
+    infoElem.innerText = `最後に挑戦した日: ${lastDate.toLocaleDateString()} \n次回挑戦可能日: ${nextDate.toLocaleDateString()}`;
+  }
 }
 
 drawButton.onclick = () => {
@@ -145,7 +146,7 @@ drawButton.onclick = () => {
     }
   }
 
-  // 回転角度を決める（当たり位置へ）
+  // 回転角度
   const total = prizes.reduce((sum, p) => sum + p.chance, 0);
   let angle = 0;
   for (let p of prizes) {
@@ -154,15 +155,18 @@ drawButton.onclick = () => {
     angle += slice;
   }
 
-  // 5回転+当たり位置
   const rotation = 360*5 - angle + Math.random()*10;
-
   canvas.style.transition = "transform 5s cubic-bezier(0.33, 1, 0.68, 1)";
   canvas.style.transform = `rotate(${rotation}deg)`;
 
   setTimeout(() => {
     resultElem.innerText = "🎉 " + prize + " 🎉";
-    localStorage.setItem("gachaDate", today);
+    const today = new Date();
+    localStorage.setItem("gachaDate", today.toISOString());
+
+    const nextDate = new Date(today);
+    nextDate.setDate(today.getDate()+7);
+    infoElem.innerText = `最後に挑戦した日: ${today.toLocaleDateString()} \n次回挑戦可能日: ${nextDate.toLocaleDateString()}`;
   }, 5000);
 }
 </script>
