@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>山形屋 肉ガチャ</title>
+<style>
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    background: linear-gradient(to bottom, #fff8f0, #ffe0b2);
+    margin: 0;
+    padding: 0;
+  }
+  h1 {
+    margin-top: 40px;
+    color: #d84315;
+  }
+  button {
+    margin-top: 60px;
+    padding: 20px 40px;
+    font-size: 24px;
+    background-color: #ff7043;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+  }
+  button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  #result {
+    margin-top: 50px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #6d4c41;
+  }
+</style>
+</head>
+<body>
+
+<h1>山形屋 肉ガチャ</h1>
+<p>1日1回挑戦できます！</p>
+<button id="drawButton">ガチャを回す</button>
+
+<p id="result"></p>
+
+<script>
+const prizes = [
+  { name: "極上和牛1皿", chance: 3 },
+  { name: "上タン1皿", chance: 7 },
+  { name: "ドリンク1杯サービス", chance: 20 },
+  { name: "ハズレ（次回5%OFF）", chance: 70 }
+];
+
+// 今日1回制御
+const today = new Date().toISOString().slice(0,10);
+const lastDraw = localStorage.getItem("lastDrawDate");
+
+const button = document.getElementById("drawButton");
+const result = document.getElementById("result");
+
+if(lastDraw === today) {
+  button.disabled = true;
+  result.innerText = "本日の抽選は終了しました。";
+}
+
+button.onclick = () => {
+  le
