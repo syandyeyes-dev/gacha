@@ -1,32 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>山形屋 肉ガチャ</title>
+<style>
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    background:#fff8f0;
+    padding: 40px 16px;
+  }
+  h1 {
+    color: #d84315;
+  }
+  #roulette-container {
+    margin: 40px auto;
+    width: 300px;
+    height: 300px;
+    position: relative;
+  }
+  #roulette {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 5px solid #d84315;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+  }
+  #pointer {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; 
+    height: 0; 
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 30px solid #d84315;
+    z-index: 2;
+  }
+  button {
+    margin-top: 20px;
+    padding: 18px 32px;
+    font-size: 22px;
+    background: #ff7043;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+  }
+  button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  #result, #info {
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #6d4c41;
+    min-height: 32px;
+    white-space: pre-line;
+  }
+</style>
+</head>
+<body>
+
+<h1>山形屋 肉ガチャ</h1>
+<p>1週間に1回挑戦できます!</p>
+
+<div id="roulette-container">
+  <div id="pointer"></div>
+  <canvas id="roulette"></canvas>
+</div>
+
+<button id="drawButton">ガチャを回す</button>
+<p id="result"></p>
+<p id="info"></p>
+
+<!-- ガチャ音 -->
+<audio id="gachaSound" src="https://www.soundjay.com/button/sounds/button-16.mp3"></audio>
+
 <script>
-// 賞品と確率＋色
+/* 賞品と確率 */
 const prizes = [
-  { name: "🎖 極上和牛 200g", chance: 3, color: "#FFD700" }, // 金
-  { name: "🥈 厚切り上タン 150g", chance: 7, color: "#FF8C00" }, // 橙
-  { name: "🍺 ドリンク1杯", chance: 20, color: "#00BFFF" }, // 水色
-  { name: "💴 次回10%OFF", chance: 30, color: "#32CD32" }, // 緑
-  { name: "😄 また挑戦してね", chance: 40, color: "#A9A9A9" } // 灰
+  { name: "🎖 極上和牛 200g", chance: 3 },
+  { name: "🥈 厚切り上タン 150g", chance: 7 },
+  { name: "🍺 ドリンク1杯", chance: 20 },
+  { name: "💴 次回10%OFF", chance: 30 },
+  { name: "😄 また挑戦してね", chance: 40 }
 ];
 
-// ルーレット描画関数
+const drawButton = document.getElementById("drawButton");
+const resultElem = document.getElementById("result");
+const infoElem = document.getElementById("info");
+const canvas = document.getElementById('roulette');
+const ctx = canvas.getContext('2d');
+const size = canvas.width = canvas.height = 300;
+const center = size/2;
+const radius = center - 10;
+const gachaSound = document.getElementById("gachaSound");
+
+/* ルーレット描画（均等スライス、文字なし） */
 function drawRoulette(colors = null) {
   const sliceAngle = 2 * Math.PI / prizes.length;
   for (let i = 0; i < prizes.length; i++) {
     ctx.beginPath();
     ctx.moveTo(center, center);
     ctx.arc(center, center, radius, i * sliceAngle, (i+1) * sliceAngle);
-    ctx.fillStyle = colors ? colors[i] : prizes[i].color;
+    ctx.fillStyle = colors ? colors[i] : `hsl(${i * (360/prizes.length)}, 70%, 70%)`;
     ctx.fill();
     ctx.stroke();
   }
 }
 
-// 抽選関数（確率通り）
+/* 光のリング描画 */
+function drawLightRing(angle) {
+  ctx.save();
+  ctx.translate(center, center);
+  ctx.rotate(angle);
+  const gradient = ctx.createRadialGradient(0, 0, radius*0.7, 0, 0, radius);
+  gradient.addColorStop(0, 'rgba(255,255,255,0)');
+  gradient.addColorStop(0.5, 'rgba(255,255,0,0.5)');
+  gradient.addColorStop(1, 'rgba(255,255,0,0)');
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, 2*Math.PI);
+  ctx.strokeStyle = gradient;
+  ctx.lineWidth = 8;
+  ctx.stroke();
+  ctx.restore();
+}
+
+drawRoulette();
+
+/* 1週間制限チェック */
+const lastDateStr = localStorage.getItem("gachaDate");
+if (lastDateStr) {
+  const lastDate = new Date(lastDateStr);
+  const now = new Date();
+  const diffDays = Math.floor((now - lastDate)/(1000*60*60*24));
+  if (diffDays < 7) {
+    drawButton.disabled = true;
+    const nextDate = new Date(lastDate);
+    nextDate.setDate(nextDate.getDate()+7);
+    infoElem.innerText = `最後に挑戦した日: ${lastDate.toLocaleDateString()} \n次回挑戦可能日: ${nextDate.toLocaleDateString()}`;
+  }
+}
+
+/* 加速→減速用イージング */
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+/* ガチャボタンクリック */
 drawButton.onclick = () => {
   drawButton.disabled = true;
   gachaSound.currentTime = 0;
   gachaSound.play();
 
+  // 確率に基づく抽選
   const rand = Math.random() * 100;
   let sum = 0;
   let prizeIndex = 0;
@@ -39,6 +170,7 @@ drawButton.onclick = () => {
   }
   const prize = prizes[prizeIndex].name;
 
+  // 回転角度（均等スライス）
   const sliceAngleDeg = 360 / prizes.length;
   const targetRotation = 360*5 - prizeIndex*sliceAngleDeg + Math.random()*sliceAngleDeg;
 
@@ -46,13 +178,13 @@ drawButton.onclick = () => {
   function animate(time) {
     if(!startTime) startTime = time;
     const elapsed = time - startTime;
-    const duration = 5000;
+    const duration = 5000; // 5秒
     const progress = Math.min(elapsed/duration, 1);
     const eased = easeOutCubic(progress);
     const currentRotation = eased * targetRotation;
 
     ctx.clearRect(0,0,size,size);
-    drawRoulette(); // 色付きスライス
+    drawRoulette();
     drawLightRing(currentRotation * Math.PI/180);
 
     if(progress < 1){
@@ -70,3 +202,6 @@ drawButton.onclick = () => {
   requestAnimationFrame(animate);
 }
 </script>
+
+</body>
+</html>
