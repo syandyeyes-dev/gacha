@@ -5,57 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>山形屋 肉ガチャ</title>
 <style>
-  body {
-    font-family: sans-serif;
-    text-align: center;
-    background:#fff8f0;
-    padding: 40px 16px;
-  }
-  h1 {
-    color: #d84315;
-  }
-  #roulette-container {
-    margin: 40px auto;
-    width: 300px;
-    height: 300px;
-    position: relative;
-  }
-  #roulette {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    border: 5px solid #d84315;
-    box-shadow: 0 0 20px rgba(0,0,0,0.3);
-  }
-  #pointer {
-    position: absolute;
-    top: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0; 
-    height: 0; 
-    border-left: 15px solid transparent;
-    border-right: 15px solid transparent;
-    border-bottom: 30px solid #d84315;
-    z-index: 2;
-  }
-  button {
-    margin-top: 20px;
-    padding: 18px 32px;
-    font-size: 22px;
-    background: #ff7043;
-    border: none;
-    border-radius: 10px;
-    color: white;
-    cursor: pointer;
-  }
-  #result {
-    margin-top: 20px;
-    font-size: 20px;
-    font-weight: bold;
-    color: #6d4c41;
-    min-height: 32px;
-  }
+  body { font-family: sans-serif; text-align: center; background:#fff8f0; padding:40px 16px; }
+  h1 { color: #d84315; }
+  #roulette-container { margin:40px auto; width:300px; height:300px; position:relative; }
+  #roulette { width:100%; height:100%; border-radius:50%; border:5px solid #d84315; box-shadow:0 0 20px rgba(0,0,0,0.3); }
+  #pointer { position:absolute; top:-20px; left:50%; transform:translateX(-50%); width:0; height:0;
+             border-left:15px solid transparent; border-right:15px solid transparent;
+             border-bottom:30px solid #d84315; z-index:2; }
+  button { margin-top:20px; padding:18px 32px; font-size:22px; background:#ff7043; border:none; border-radius:10px; color:white; cursor:pointer; }
+  #result { margin-top:20px; font-size:20px; font-weight:bold; color:#6d4c41; min-height:32px; }
 </style>
 </head>
 <body>
@@ -91,31 +49,31 @@ const center = size/2;
 const radius = center - 10;
 const gachaSound = document.getElementById("gachaSound");
 
-// 均等スライスのルーレット描画
+// 均等スライス
 function drawRoulette(colors = null) {
   const sliceAngle = 2 * Math.PI / prizes.length;
   for (let i = 0; i < prizes.length; i++) {
     ctx.beginPath();
     ctx.moveTo(center, center);
     ctx.arc(center, center, radius, i * sliceAngle, (i+1) * sliceAngle);
-    ctx.fillStyle = colors ? colors[i] : `hsl(${i * (360/prizes.length)}, 70%, 70%)`;
+    ctx.fillStyle = colors ? colors[i] : `hsl(${i*(360/prizes.length)},70%,70%)`;
     ctx.fill();
     ctx.stroke();
   }
 }
 
-// 光のリング描画
+// 光リング
 function drawLightRing(angle) {
   ctx.save();
   ctx.translate(center, center);
   ctx.rotate(angle);
-  const gradient = ctx.createRadialGradient(0, 0, radius*0.7, 0, 0, radius);
-  gradient.addColorStop(0, 'rgba(255,255,255,0)');
-  gradient.addColorStop(0.5, 'rgba(255,255,0,0.5)');
-  gradient.addColorStop(1, 'rgba(255,255,0,0)');
+  const grad = ctx.createRadialGradient(0, 0, radius*0.7, 0, 0, radius);
+  grad.addColorStop(0,'rgba(255,255,255,0)');
+  grad.addColorStop(0.5,'rgba(255,255,0,0.5)');
+  grad.addColorStop(1,'rgba(255,255,0,0)');
   ctx.beginPath();
-  ctx.arc(0, 0, radius, 0, 2*Math.PI);
-  ctx.strokeStyle = gradient;
+  ctx.arc(0,0,radius,0,2*Math.PI);
+  ctx.strokeStyle = grad;
   ctx.lineWidth = 8;
   ctx.stroke();
   ctx.restore();
@@ -124,28 +82,24 @@ function drawLightRing(angle) {
 // 初期描画
 drawRoulette();
 
-// イージング関数（加速→減速）
-function easeOutCubic(t) {
-  return 1 - Math.pow(1 - t, 3);
-}
+// イージング関数
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
 drawButton.onclick = () => {
   drawButton.disabled = true;
   gachaSound.currentTime = 0;
   gachaSound.play();
 
-  // 抽選（確率均等）
   const prizeIndex = Math.floor(Math.random() * prizes.length);
   const prize = prizes[prizeIndex].name;
-
   const sliceAngleDeg = 360 / prizes.length;
   const targetRotation = 360*5 - prizeIndex*sliceAngleDeg + Math.random()*sliceAngleDeg;
-
   let startTime = null;
+
   function animate(time) {
-    if(!startTime) startTime = time;
+    if (!startTime) startTime = time;
     const elapsed = time - startTime;
-    const duration = 5000; // 回転時間5秒
+    const duration = 4000;
     const progress = Math.min(elapsed/duration, 1);
     const eased = easeOutCubic(progress);
     const currentRotation = eased * targetRotation;
@@ -154,14 +108,13 @@ drawButton.onclick = () => {
     drawRoulette();
     drawLightRing(currentRotation * Math.PI/180);
 
-    if(progress < 1){
+    if (progress < 1) {
       requestAnimationFrame(animate);
     } else {
       resultElem.innerText = "🎉 " + prize + " 🎉";
       drawButton.disabled = false;
     }
   }
-
   requestAnimationFrame(animate);
 }
 </script>
