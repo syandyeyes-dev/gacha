@@ -55,7 +55,6 @@
     font-weight: bold;
     color: #6d4c41;
     min-height: 32px;
-    white-space: pre-line;
   }
 </style>
 </head>
@@ -92,6 +91,7 @@ const center = size/2;
 const radius = center - 10;
 const gachaSound = document.getElementById("gachaSound");
 
+// 均等スライスのルーレット描画
 function drawRoulette(colors = null) {
   const sliceAngle = 2 * Math.PI / prizes.length;
   for (let i = 0; i < prizes.length; i++) {
@@ -104,6 +104,7 @@ function drawRoulette(colors = null) {
   }
 }
 
+// 光のリング描画
 function drawLightRing(angle) {
   ctx.save();
   ctx.translate(center, center);
@@ -120,16 +121,20 @@ function drawLightRing(angle) {
   ctx.restore();
 }
 
+// 初期描画
 drawRoulette();
 
+// イージング関数（加速→減速）
 function easeOutCubic(t) {
   return 1 - Math.pow(1 - t, 3);
 }
 
 drawButton.onclick = () => {
+  drawButton.disabled = true;
   gachaSound.currentTime = 0;
   gachaSound.play();
 
+  // 抽選（確率均等）
   const prizeIndex = Math.floor(Math.random() * prizes.length);
   const prize = prizes[prizeIndex].name;
 
@@ -140,7 +145,7 @@ drawButton.onclick = () => {
   function animate(time) {
     if(!startTime) startTime = time;
     const elapsed = time - startTime;
-    const duration = 5000;
+    const duration = 5000; // 回転時間5秒
     const progress = Math.min(elapsed/duration, 1);
     const eased = easeOutCubic(progress);
     const currentRotation = eased * targetRotation;
@@ -153,6 +158,7 @@ drawButton.onclick = () => {
       requestAnimationFrame(animate);
     } else {
       resultElem.innerText = "🎉 " + prize + " 🎉";
+      drawButton.disabled = false;
     }
   }
 
