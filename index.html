@@ -148,4 +148,24 @@ drawButton.onclick = () => {
     if(!startTime) startTime = time;
     const elapsed = time - startTime;
     const duration = 5000; // 回転時間5秒
-    const progress = Math.min(elapsed
+    const progress = Math.min(elapsed/duration, 1);
+    const eased = easeOutCubic(progress);
+    const currentRotation = eased * targetRotation;
+
+    ctx.clearRect(0,0,size,size);
+    drawRoulette();
+    drawLightRing(currentRotation * Math.PI/180);
+
+    if(progress < 1){
+      requestAnimationFrame(animate);
+    } else {
+      resultElem.innerText = "🎉 " + prize + " 🎉";
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+</script>
+
+</body>
+</html>
