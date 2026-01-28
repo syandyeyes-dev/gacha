@@ -75,7 +75,6 @@
 <audio id="gachaSound" src="https://www.soundjay.com/button/sounds/button-16.mp3"></audio>
 
 <script>
-/* 賞品（5種類、確率均等） */
 const prizes = [
   { name: "🎖 極上和牛 200g" },
   { name: "🥈 厚切り上タン 150g" },
@@ -93,7 +92,6 @@ const center = size/2;
 const radius = center - 10;
 const gachaSound = document.getElementById("gachaSound");
 
-/* 均等スライス描画 */
 function drawRoulette(colors = null) {
   const sliceAngle = 2 * Math.PI / prizes.length;
   for (let i = 0; i < prizes.length; i++) {
@@ -106,7 +104,6 @@ function drawRoulette(colors = null) {
   }
 }
 
-/* 光のリング描画 */
 function drawLightRing(angle) {
   ctx.save();
   ctx.translate(center, center);
@@ -125,21 +122,17 @@ function drawLightRing(angle) {
 
 drawRoulette();
 
-/* 加速→減速用イージング */
 function easeOutCubic(t) {
   return 1 - Math.pow(1 - t, 3);
 }
 
-/* ボタンクリック */
 drawButton.onclick = () => {
   gachaSound.currentTime = 0;
   gachaSound.play();
 
-  // 確率均等（5種類 → 20%ずつ）
   const prizeIndex = Math.floor(Math.random() * prizes.length);
   const prize = prizes[prizeIndex].name;
 
-  // 回転角度（均等スライス）
   const sliceAngleDeg = 360 / prizes.length;
   const targetRotation = 360*5 - prizeIndex*sliceAngleDeg + Math.random()*sliceAngleDeg;
 
@@ -147,7 +140,7 @@ drawButton.onclick = () => {
   function animate(time) {
     if(!startTime) startTime = time;
     const elapsed = time - startTime;
-    const duration = 5000; // 回転時間5秒
+    const duration = 5000;
     const progress = Math.min(elapsed/duration, 1);
     const eased = easeOutCubic(progress);
     const currentRotation = eased * targetRotation;
